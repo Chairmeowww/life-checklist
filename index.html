@@ -925,6 +925,92 @@ body {
   }
 }
 
+/* ===== PIN MODAL ===== */
+.pin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(90, 154, 110, 0.15);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.pin-overlay.hidden { display: none; }
+.pin-modal {
+  background: linear-gradient(145deg, #f0f7f2, #ffffff);
+  border: 2px solid rgba(90, 154, 110, 0.25);
+  border-radius: 20px;
+  padding: 36px 32px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(90, 154, 110, 0.2), 0 4px 12px rgba(0,0,0,0.05);
+}
+.pin-modal-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+.pin-modal h2 {
+  margin: 0 0 6px;
+  font-size: 1.2rem;
+  color: #3a6b4a;
+}
+.pin-modal p {
+  color: #7a9e87;
+  font-size: 0.82rem;
+  margin: 0 0 22px;
+  line-height: 1.4;
+}
+.pin-input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.5rem;
+  text-align: center;
+  border: 2px solid rgba(90, 154, 110, 0.3);
+  border-radius: 12px;
+  letter-spacing: 8px;
+  font-weight: 700;
+  box-sizing: border-box;
+  background: white;
+  -moz-appearance: textfield;
+  transition: border-color 0.2s;
+}
+.pin-input::-webkit-outer-spin-button,
+.pin-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pin-input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(90, 154, 110, 0.15);
+}
+.pin-submit {
+  width: 100%;
+  padding: 13px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, #5a9a6e, #4a8a5e);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 4px 12px rgba(90, 154, 110, 0.3);
+}
+.pin-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(90, 154, 110, 0.4); }
+.pin-submit:active { transform: translateY(0); }
+.pin-skip {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: #9ab8a3;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.pin-skip:hover { color: #5a9a6e; }
+
 /* ===== TOAST ===== */
 .toast {
   position: fixed;
@@ -1089,9 +1175,23 @@ body {
 </head>
 <body>
 
+<!-- PIN Modal -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-modal">
+    <div class="pin-modal-icon">🌿</div>
+    <h2>Welcome back!</h2>
+    <p>Enter your PIN to sync your tasks across all your devices.</p>
+    <input type="number" id="pinInput" class="pin-input" placeholder="e.g. 1234" maxlength="6"
+           onkeydown="if(event.key==='Enter')submitPin()" autofocus />
+    <button class="pin-submit" onclick="submitPin()">Sync & Continue</button>
+    <button class="pin-skip" onclick="skipPin()">Use without syncing</button>
+  </div>
+</div>
+
 <header class="app-header">
   <h1>🧠 Life Management Dashboard</h1>
   <div class="header-actions">
+    <button class="btn-icon" id="syncStatus" onclick="showPinModal()" title="Sync status">🔒</button>
     <button class="btn-icon" onclick="exportData()" title="Export JSON">📤</button>
     <button class="btn-icon" onclick="importData()" title="Import JSON">📥</button>
   </div>
@@ -1292,16 +1392,93 @@ const PROJECT_COLORS = [
 ];
 
 // ===== INIT =====
+// ===== PIN & SYNC =====
+let userPin = localStorage.getItem('life-checklist-pin') || null;
+
+function showPinModal() {
+  document.getElementById('pinOverlay').classList.remove('hidden');
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinInput').focus();
+}
+
+function submitPin() {
+  const pin = document.getElementById('pinInput').value.trim();
+  if (!pin || pin.length < 4) {
+    toast('Enter at least 4 digits');
+    return;
+  }
+  userPin = pin;
+  localStorage.setItem('life-checklist-pin', pin);
+  document.getElementById('pinOverlay').classList.add('hidden');
+  updateSyncIcon(true);
+  init();
+}
+
+function skipPin() {
+  userPin = null;
+  localStorage.removeItem('life-checklist-pin');
+  document.getElementById('pinOverlay').classList.add('hidden');
+  updateSyncIcon(false);
+  initLocal();
+}
+
+function updateSyncIcon(syncing) {
+  const btn = document.getElementById('syncStatus');
+  btn.textContent = syncing ? '🔄' : '🔒';
+  btn.title = syncing ? 'Syncing (click to change PIN)' : 'Not syncing (click to enter PIN)';
+}
+
 async function init() {
+  if (!userPin) {
+    // Show PIN modal on first visit, otherwise load local
+    const saved = localStorage.getItem('life-checklist');
+    if (saved) {
+      initLocal();
+    } else {
+      showPinModal();
+    }
+    return;
+  }
+
+  document.getElementById('pinOverlay').classList.add('hidden');
+  updateSyncIcon(true);
+
   try {
-    const res = await fetch('/api/tasks');
-    data = await res.json();
+    const res = await fetch('/api/tasks', {
+      headers: { 'X-Pin': userPin }
+    });
+    if (res.ok) {
+      const serverData = await res.json();
+      if (serverData && serverData.runningLists) {
+        data = serverData;
+        localStorage.setItem('life-checklist', JSON.stringify(data));
+      } else {
+        // New PIN — no data on server yet, use local or defaults
+        const saved = localStorage.getItem('life-checklist');
+        if (saved) data = JSON.parse(saved);
+        save(); // push local data to server
+      }
+    } else {
+      // 404 = new PIN, push local data up
+      const saved = localStorage.getItem('life-checklist');
+      if (saved) data = JSON.parse(saved);
+      save();
+    }
   } catch {
-    // If server isn't running, try localStorage
+    // Offline — use localStorage
     const saved = localStorage.getItem('life-checklist');
     if (saved) data = JSON.parse(saved);
   }
-  // Migrate: ensure weekPlan exists
+
+  if (!data.weekPlan) data.weekPlan = {};
+  if (!data.weekPlanSettings) data.weekPlanSettings = { deepWorkDays: [2, 3, 4] };
+  render();
+}
+
+function initLocal() {
+  updateSyncIcon(false);
+  const saved = localStorage.getItem('life-checklist');
+  if (saved) data = JSON.parse(saved);
   if (!data.weekPlan) data.weekPlan = {};
   if (!data.weekPlanSettings) data.weekPlanSettings = { deepWorkDays: [2, 3, 4] };
   render();
@@ -1310,10 +1487,11 @@ async function init() {
 // ===== SAVE =====
 async function save() {
   localStorage.setItem('life-checklist', JSON.stringify(data));
+  if (!userPin) return; // local-only mode
   try {
     await fetch('/api/tasks', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Pin': userPin },
       body: JSON.stringify(data)
     });
   } catch { /* offline mode — localStorage only */ }

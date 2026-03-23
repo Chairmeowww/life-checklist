@@ -1348,6 +1348,7 @@ let data = {
       {"id":"rl-10","text":"Learn to play guitar","done":true},
       {"id":"rl-11","text":"Set up home automation system","done":true}
     ],
+    "delegate": [],
     "recommendations": [],
     "newPeople": [],
     "friendAgendas": []
@@ -1472,6 +1473,7 @@ async function init() {
 
   if (!data.weekPlan) data.weekPlan = {};
   if (!data.weekPlanSettings) data.weekPlanSettings = { deepWorkDays: [2, 3, 4] };
+  if (!data.runningLists.delegate) data.runningLists.delegate = [];
   render();
 }
 
@@ -1480,6 +1482,7 @@ function initLocal() {
   const saved = localStorage.getItem('life-checklist');
   if (saved) data = JSON.parse(saved);
   if (!data.weekPlan) data.weekPlan = {};
+  if (!data.runningLists.delegate) data.runningLists.delegate = [];
   if (!data.weekPlanSettings) data.weekPlanSettings = { deepWorkDays: [2, 3, 4] };
   render();
 }

@@ -1148,6 +1148,60 @@ body {
   transition: opacity 0.15s;
 }
 .week-task .task-return:hover { opacity: 1; }
+.week-task .task-move {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  opacity: 0.3;
+  padding: 2px 4px;
+  transition: opacity 0.15s;
+}
+.week-task .task-move:hover { opacity: 1; }
+.week-add-input {
+  width: 100%;
+  border: none;
+  border-top: 1px dashed var(--border);
+  background: transparent;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  color: var(--text);
+  outline: none;
+  margin-top: 4px;
+}
+.week-add-input::placeholder { color: var(--text-dim); opacity: 0.5; }
+.week-add-input:focus { border-top-color: var(--accent); background: rgba(255,255,255,0.3); }
+/* Duplicate modal */
+.dupe-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+}
+.dupe-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  max-width: 380px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.dupe-modal h3 { margin: 0 0 8px; font-size: 1rem; }
+.dupe-modal p { margin: 0 0 16px; font-size: 0.85rem; color: var(--text-dim); }
+.dupe-existing { background: var(--surface2); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 12px; font-size: 0.85rem; }
+.dupe-new { background: #e8f5e9; padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 0.85rem; }
+.dupe-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.dupe-actions button {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.dupe-actions button.primary { background: var(--accent); color: white; border-color: var(--accent); }
 .btn-ghost {
   background: none;
   border: 1px solid var(--border);
@@ -2267,6 +2321,7 @@ function weekTaskHTML(task, dateKey) {
       </div>
       <span class="task-text" onclick="startEditWeekTask('${dateKey}','${task.id}', this, event)">${esc(task.text)}</span>
       <span class="week-task-source" title="From: ${esc(sourceLabel)}">${sourceEmoji}</span>
+      <button class="task-move" onclick="showWeekMovePicker('${dateKey}','${task.id}', this, event)" title="Add to list/project">↗</button>
       <button class="task-return" onclick="returnWeekTask('${dateKey}','${task.id}')" title="Return to ${esc(sourceLabel)}">↩</button>
     </div>
   `;
@@ -2335,7 +2390,8 @@ function renderWeekPlan() {
         </div>
         <div class="day-slot" data-date="${dateKey}" data-type="week" data-parent="${dateKey}">
           ${tasks.map(task => weekTaskHTML(task, dateKey)).join('')}
-          ${!tasks.length ? '<div class="day-slot-empty">Drag tasks here</div>' : ''}
+          <input class="week-add-input" placeholder="+ add task"
+                 onkeydown="if(event.key==='Enter')addWeekTask('${dateKey}',this)" />
         </div>
       </div>
     `;
@@ -2391,6 +2447,174 @@ function carryForwardOverdue() {
   save();
   render();
   toast('Overdue tasks moved to today');
+}
+
+// ===== WEEKLY PLAN: INLINE ADD =====
+function addWeekTask(dateKey, inputEl) {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  if (!data.weekPlan[dateKey]) data.weekPlan[dateKey] = [];
+  data.weekPlan[dateKey].push({
+    id: uid(),
+    text,
+    done: false,
+    sourceType: 'week',
+    sourceParentId: dateKey
+  });
+  inputEl.value = '';
+  save();
+  renderWeekPlan();
+  // Re-focus the input for that day
+  const slot = document.querySelector(`.day-slot[data-date="${dateKey}"]`);
+  if (slot) slot.querySelector('.week-add-input')?.focus();
+}
+
+// ===== WEEKLY PLAN: MOVE TO LIST/PROJECT =====
+function showWeekMovePicker(dateKey, taskId, btn, event) {
+  event.stopPropagation();
+  closeMovePicker();
+
+  const rect = btn.getBoundingClientRect();
+  const destinations = [];
+
+  // Running lists
+  for (const [key, meta] of Object.entries(LIST_META)) {
+    destinations.push({ label: `${meta.emoji} ${meta.label}`, type: 'list', parentId: key });
+  }
+  // Projects
+  for (const proj of data.projects) {
+    destinations.push({ label: `📁 ${proj.title}`, type: 'proj', parentId: proj.id });
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'move-picker-overlay';
+  overlay.onclick = closeMovePicker;
+
+  const picker = document.createElement('div');
+  picker.className = 'move-picker';
+  picker.id = 'movePicker';
+
+  picker.innerHTML = `
+    <div class="move-picker-title">Add to…</div>
+    ${destinations.map((d, i) => {
+      const divider = (i > 0 && d.type !== destinations[i-1].type) ? '<div class="move-picker-divider"></div>' : '';
+      return `${divider}<div class="move-picker-item"
+        onclick="addWeekTaskToTarget('${dateKey}','${taskId}','${d.type}','${d.parentId}')">
+        ${d.label}
+      </div>`;
+    }).join('')}
+  `;
+
+  document.body.appendChild(overlay);
+  document.body.appendChild(picker);
+
+  let top = rect.bottom + 4;
+  let left = rect.right - 200;
+  if (left < 8) left = 8;
+  if (top + 320 > window.innerHeight) top = rect.top - 320;
+  picker.style.top = top + 'px';
+  picker.style.left = left + 'px';
+}
+
+function addWeekTaskToTarget(dateKey, taskId, toType, toParent) {
+  closeMovePicker();
+  const tasks = data.weekPlan[dateKey];
+  if (!tasks) return;
+  const task = tasks.find(t => t.id === taskId);
+  if (!task) return;
+
+  const targetArr = getTaskArray(toType, toParent);
+  if (!targetArr) return;
+
+  // Check for duplicates
+  const dupes = findDuplicates(task.text, targetArr);
+  if (dupes.length > 0) {
+    showDupeModal(task, dupes[0], toType, toParent, targetArr, dateKey);
+    return;
+  }
+
+  // No duplicates — add it
+  targetArr.push({ id: uid(), text: task.text, done: false });
+  save();
+  render();
+  const label = getListLabel(toType, toParent);
+  toast(`Added to ${label}`);
+}
+
+// ===== DUPLICATE DETECTION =====
+function findDuplicates(text, targetArr) {
+  const normalize = s => s.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+  const newNorm = normalize(text);
+  const newWords = newNorm.split(/\s+/).filter(w => w.length > 2);
+
+  return targetArr.filter(t => {
+    const existNorm = normalize(t.text);
+    // Exact match
+    if (existNorm === newNorm) return true;
+    // High word overlap (>60% of words match)
+    const existWords = existNorm.split(/\s+/).filter(w => w.length > 2);
+    if (!newWords.length || !existWords.length) return false;
+    const overlap = newWords.filter(w => existWords.includes(w)).length;
+    return overlap / Math.max(newWords.length, existWords.length) > 0.6;
+  });
+}
+
+function showDupeModal(newTask, existingTask, toType, toParent, targetArr, dateKey) {
+  const label = getListLabel(toType, toParent);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dupe-overlay';
+  overlay.id = 'dupeOverlay';
+
+  overlay.innerHTML = `
+    <div class="dupe-modal">
+      <h3>Similar task found in ${esc(label)}</h3>
+      <p>A similar item already exists:</p>
+      <div class="dupe-existing">📋 <strong>Existing:</strong> ${esc(existingTask.text)}</div>
+      <div class="dupe-new">✨ <strong>New:</strong> ${esc(newTask.text)}</div>
+      <div class="dupe-actions">
+        <button onclick="dupeReplace('${existingTask.id}','${toType}','${toParent}','${esc(newTask.text).replace(/'/g, "\\'")}')">Replace existing</button>
+        <button onclick="dupeAddAnyway('${toType}','${toParent}','${esc(newTask.text).replace(/'/g, "\\'")}')">Add anyway</button>
+        <button onclick="dupeCancel()">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+}
+
+function dupeReplace(existId, toType, toParent, newText) {
+  closeDupeModal();
+  const targetArr = getTaskArray(toType, toParent);
+  if (!targetArr) return;
+  const task = targetArr.find(t => t.id === existId);
+  if (task) {
+    task.text = newText;
+    task.done = false;
+  }
+  save();
+  render();
+  toast('Replaced existing task');
+}
+
+function dupeAddAnyway(toType, toParent, text) {
+  closeDupeModal();
+  const targetArr = getTaskArray(toType, toParent);
+  if (!targetArr) return;
+  targetArr.push({ id: uid(), text, done: false });
+  save();
+  render();
+  const label = getListLabel(toType, toParent);
+  toast(`Added to ${label}`);
+}
+
+function dupeCancel() {
+  closeDupeModal();
+}
+
+function closeDupeModal() {
+  const el = document.getElementById('dupeOverlay');
+  if (el) el.remove();
 }
 
 function changeWeek(delta) {

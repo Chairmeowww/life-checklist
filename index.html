@@ -1161,7 +1161,6 @@ body {
 .week-add-input {
   width: 100%;
   border: none;
-  border-top: 1px dashed var(--border);
   background: transparent;
   padding: 6px 8px;
   font-size: 0.8rem;
@@ -1170,7 +1169,7 @@ body {
   margin-top: 4px;
 }
 .week-add-input::placeholder { color: var(--text-dim); opacity: 0.5; }
-.week-add-input:focus { border-top-color: var(--accent); background: rgba(255,255,255,0.3); }
+.week-add-input:focus { background: rgba(255,255,255,0.3); }
 /* Duplicate modal */
 .dupe-overlay {
   position: fixed; inset: 0;
@@ -2320,9 +2319,9 @@ function weekTaskHTML(task, dateKey) {
         ${task.done ? '✓' : ''}
       </div>
       <span class="task-text" onclick="startEditWeekTask('${dateKey}','${task.id}', this, event)">${esc(task.text)}</span>
-      <span class="week-task-source" title="From: ${esc(sourceLabel)}">${sourceEmoji}</span>
+      ${task.sourceType !== 'week' ? `<span class="week-task-source" title="From: ${esc(sourceLabel)}">${sourceEmoji}</span>` : ''}
       <button class="task-move" onclick="showWeekMovePicker('${dateKey}','${task.id}', this, event)" title="Add to list/project">↗</button>
-      <button class="task-return" onclick="returnWeekTask('${dateKey}','${task.id}')" title="Return to ${esc(sourceLabel)}">↩</button>
+      ${task.sourceType !== 'week' ? `<button class="task-return" onclick="returnWeekTask('${dateKey}','${task.id}')" title="Return to ${esc(sourceLabel)}">↩</button>` : ''}
     </div>
   `;
 }

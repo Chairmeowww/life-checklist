@@ -450,11 +450,18 @@ body {
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  cursor: grab;
+  cursor: default;
   position: relative;
 }
-.task-item:active { cursor: grabbing; }
 .task-item:hover { background: var(--surface2); }
+.task-item.selected {
+  background: var(--surface2);
+  box-shadow: 0 0 0 2px #6aafe6;
+  cursor: grab;
+}
+.task-item.selected:active { cursor: grabbing; }
+.task-item:not(.selected) .task-move,
+.task-item:not(.selected) .task-delete { opacity: 0 !important; pointer-events: none; }
 .task-item.done { opacity: 0.4; }
 .task-item.done .task-text { text-decoration: line-through; }
 .task-item.dragging {
@@ -1158,14 +1165,14 @@ body {
   margin-right: -10px;
   transition: opacity 0.15s;
 }
-.week-task:hover .task-move { opacity: 0.3; }
+.week-task.selected .task-move { opacity: 0.3; }
 .week-task .task-move:hover { opacity: 1; }
 .week-task .task-delete {
   position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
   background: none; border: none; cursor: pointer;
   font-size: 0.85rem; color: var(--text-dim); opacity: 0; transition: opacity 0.2s; padding: 2px 6px;
 }
-.week-task:hover .task-delete { opacity: 0.4; }
+.week-task.selected .task-delete { opacity: 0.4; }
 .week-task .task-delete:hover { opacity: 1; color: #c44; }
 .week-add-input {
   width: 100%;
@@ -2045,15 +2052,15 @@ function toggleSideBrain() {
 function taskItemHTML(task, type, parentId) {
   return `
     <div class="task-item ${task.done ? 'done' : ''}"
-         draggable="true"
-         data-task-id="${task.id}" data-type="${type}" data-parent="${parentId}">
+         data-task-id="${task.id}" data-type="${type}" data-parent="${parentId}"
+         onclick="handleTaskClick(this, '${type}','${parentId}','${task.id}', event)">
       <div class="task-checkbox ${task.done ? 'checked' : ''}"
-           onclick="toggleTask('${type}','${parentId}','${task.id}')">
+           onclick="event.stopPropagation(); toggleTask('${type}','${parentId}','${task.id}')">
         ${task.done ? '✓' : ''}
       </div>
-      <span class="task-text" onclick="startEditTask('${type}','${parentId}','${task.id}', this, event)">${esc(task.text)}</span>
-      <button class="task-move" onclick="showMovePicker('${type}','${parentId}','${task.id}', this, event)" title="Move to...">↗</button>
-      <button class="task-delete" onclick="deleteTask('${type}','${parentId}','${task.id}')">✕</button>
+      <span class="task-text">${esc(task.text)}</span>
+      <button class="task-move" onclick="event.stopPropagation(); showMovePicker('${type}','${parentId}','${task.id}', this, event)" title="Move to...">↗</button>
+      <button class="task-delete" onclick="event.stopPropagation(); deleteTask('${type}','${parentId}','${task.id}')">✕</button>
     </div>
   `;
 }
@@ -2321,17 +2328,17 @@ function weekTaskHTML(task, dateKey) {
   const sourceLabel = getListLabel(task.sourceType, task.sourceParentId);
   return `
     <div class="task-item week-task ${task.done ? 'done' : ''}"
-         draggable="true"
-         data-task-id="${task.id}" data-type="week" data-parent="${dateKey}">
+         data-task-id="${task.id}" data-type="week" data-parent="${dateKey}"
+         onclick="handleTaskClick(this, 'week','${dateKey}','${task.id}', event)">
       <div class="task-checkbox ${task.done ? 'checked' : ''}"
-           onclick="toggleWeekTask('${dateKey}','${task.id}')">
+           onclick="event.stopPropagation(); toggleWeekTask('${dateKey}','${task.id}')">
         ${task.done ? '✓' : ''}
       </div>
-      <span class="task-text" onclick="startEditWeekTask('${dateKey}','${task.id}', this, event)">${esc(task.text)}</span>
+      <span class="task-text">${esc(task.text)}</span>
       ${task.sourceType !== 'week' ? `<span class="week-task-source" title="From: ${esc(sourceLabel)}">${sourceEmoji}</span>` : ''}
-      <button class="task-move" onclick="showWeekMovePicker('${dateKey}','${task.id}', this, event)" title="Add to list/project">↗</button>
-      ${task.sourceType !== 'week' ? `<button class="task-return" onclick="returnWeekTask('${dateKey}','${task.id}')" title="Return to ${esc(sourceLabel)}">↩</button>` : ''}
-      <button class="task-delete" onclick="deleteWeekTask('${dateKey}','${task.id}')" title="Delete task">×</button>
+      <button class="task-move" onclick="event.stopPropagation(); showWeekMovePicker('${dateKey}','${task.id}', this, event)" title="Add to list/project">↗</button>
+      ${task.sourceType !== 'week' ? `<button class="task-return" onclick="event.stopPropagation(); returnWeekTask('${dateKey}','${task.id}')" title="Return to ${esc(sourceLabel)}">↩</button>` : ''}
+      <button class="task-delete" onclick="event.stopPropagation(); deleteWeekTask('${dateKey}','${task.id}')" title="Delete task">×</button>
     </div>
   `;
 }
@@ -3227,6 +3234,45 @@ document.addEventListener('dragend', function(e) {
   document.querySelectorAll('.task-item').forEach(el => {
     el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
   });
+});
+
+// ===== TWO-STAGE ACTIVATION =====
+let selectedTaskEl = null;
+
+function handleTaskClick(el, type, parentId, taskId, event) {
+  // If already selected, enter edit mode
+  if (el.classList.contains('selected')) {
+    const textEl = el.querySelector('.task-text');
+    if (type === 'week') {
+      startEditWeekTask(parentId, taskId, textEl, event);
+    } else {
+      startEditTask(type, parentId, taskId, textEl, event);
+    }
+    return;
+  }
+
+  // Deselect any previously selected task
+  deselectTask();
+
+  // Select this task
+  el.classList.add('selected');
+  el.setAttribute('draggable', 'true');
+  selectedTaskEl = el;
+}
+
+function deselectTask() {
+  if (selectedTaskEl) {
+    selectedTaskEl.classList.remove('selected');
+    selectedTaskEl.setAttribute('draggable', 'false');
+    selectedTaskEl = null;
+  }
+}
+
+// Click outside deselects
+document.addEventListener('click', function(e) {
+  if (selectedTaskEl && !selectedTaskEl.contains(e.target)) {
+    deselectTask();
+  }
 });
 
 // ===== INLINE EDITING =====

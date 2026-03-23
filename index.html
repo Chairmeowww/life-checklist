@@ -1132,7 +1132,7 @@ body {
   padding: 20px 8px;
   opacity: 0.5;
 }
-.week-task { position: relative; }
+.week-task { position: relative; padding: 10px 40px 10px 10px; }
 .week-task .week-task-source {
   font-size: 0.7rem;
   opacity: 0.6;
@@ -1153,10 +1153,11 @@ body {
   border: none;
   cursor: pointer;
   font-size: 0.8rem;
-  opacity: 0.3;
+  opacity: 0;
   padding: 2px 4px;
   transition: opacity 0.15s;
 }
+.week-task:hover .task-move { opacity: 0.3; }
 .week-task .task-move:hover { opacity: 1; }
 .week-task .task-delete {
   position: absolute; right: 4px; top: 50%; transform: translateY(-50%);

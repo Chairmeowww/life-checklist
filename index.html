@@ -1158,6 +1158,13 @@ body {
   transition: opacity 0.15s;
 }
 .week-task .task-move:hover { opacity: 1; }
+.week-task .task-delete {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer;
+  font-size: 0.85rem; color: var(--text-dim); opacity: 0; transition: opacity 0.2s; padding: 2px 6px;
+}
+.week-task:hover .task-delete { opacity: 0.4; }
+.week-task .task-delete:hover { opacity: 1; color: #c44; }
 .week-add-input {
   width: 100%;
   border: none;
@@ -2322,6 +2329,7 @@ function weekTaskHTML(task, dateKey) {
       ${task.sourceType !== 'week' ? `<span class="week-task-source" title="From: ${esc(sourceLabel)}">${sourceEmoji}</span>` : ''}
       <button class="task-move" onclick="showWeekMovePicker('${dateKey}','${task.id}', this, event)" title="Add to list/project">↗</button>
       ${task.sourceType !== 'week' ? `<button class="task-return" onclick="returnWeekTask('${dateKey}','${task.id}')" title="Return to ${esc(sourceLabel)}">↩</button>` : ''}
+      <button class="task-delete" onclick="deleteWeekTask('${dateKey}','${task.id}')" title="Delete task">×</button>
     </div>
   `;
 }
@@ -2388,7 +2396,7 @@ function renderWeekPlan() {
           }
         </div>
         <div class="day-slot" data-date="${dateKey}" data-type="week" data-parent="${dateKey}">
-          ${tasks.map(task => weekTaskHTML(task, dateKey)).join('')}
+          ${tasks.filter(t => !t.done).map(task => weekTaskHTML(task, dateKey)).join('')}
           <input class="week-add-input" placeholder="+ add task"
                  onkeydown="if(event.key==='Enter')addWeekTask('${dateKey}',this)" />
         </div>
@@ -2405,6 +2413,16 @@ function toggleWeekTask(dateKey, taskId) {
   if (!tasks) return;
   const task = tasks.find(t => t.id === taskId);
   if (task) task.done = !task.done;
+  save();
+  render();
+}
+
+function deleteWeekTask(dateKey, taskId) {
+  const tasks = data.weekPlan[dateKey];
+  if (!tasks) return;
+  const idx = tasks.findIndex(t => t.id === taskId);
+  if (idx === -1) return;
+  tasks.splice(idx, 1);
   save();
   render();
 }
@@ -2698,6 +2716,22 @@ function renderCompleted() {
     }
   }
 
+  // Gather from weekly plan
+  const weekDone = [];
+  for (const [dateKey, tasks] of Object.entries(data.weekPlan || {})) {
+    for (const task of tasks) {
+      if (task.done) {
+        weekDone.push({ ...task, type: 'week', parentId: dateKey, dateLabel: dateKey });
+      }
+    }
+  }
+  if (weekDone.length) {
+    groups.push({
+      label: '📅 Weekly Plan',
+      items: weekDone
+    });
+  }
+
   const totalDone = groups.reduce((sum, g) => sum + g.items.length, 0);
   countEl.textContent = totalDone;
 
@@ -2713,7 +2747,7 @@ function renderCompleted() {
     ${g.items.map(item => `
       <div class="completed-item">
         <div class="task-checkbox checked"
-             onclick="toggleTask('${item.type}','${item.parentId}','${item.id}')"
+             onclick="${item.type === 'week' ? `toggleWeekTask('${item.parentId}','${item.id}')` : `toggleTask('${item.type}','${item.parentId}','${item.id}')`}"
              style="cursor:pointer;">✓</div>
         <span class="completed-item-text">${esc(item.text)}</span>
       </div>

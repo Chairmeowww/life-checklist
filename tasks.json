@@ -1,0 +1,392 @@
+{
+  "inbox": [],
+  "undecided": [],
+  "runningLists": {
+    "home": [
+      {
+        "id": "rl-1",
+        "text": "Fix leaky kitchen faucet",
+        "done": true
+      },
+      {
+        "id": "id-mmfrkxai-yvoat",
+        "text": "chop shallots and add to red vinegar",
+        "done": true
+      },
+      {
+        "id": "rl-2",
+        "text": "Replace air filters",
+        "done": true
+      },
+      {
+        "id": "id-mmdtr1mi-sc7zv",
+        "text": "clean out candles by back water heater",
+        "done": false
+      },
+      {
+        "id": "id-mmdtr1mi-xxkrm",
+        "text": "put masking tape notes on paint cans",
+        "done": false
+      },
+      {
+        "id": "id-mmdts857-y5x0k",
+        "text": "wipe cat spray and use mint / lemon on front patio",
+        "done": false
+      },
+      {
+        "id": "id-mmdtsdti-c83j6",
+        "text": "put registration sticker on car",
+        "done": false
+      },
+      {
+        "id": "id-mmdu23ha-x0uvu",
+        "text": "wash and squeegee back office window",
+        "done": false
+      }
+    ],
+    "errands": [
+      {
+        "id": "rl-3",
+        "text": "Pick up dry cleaning",
+        "done": true
+      },
+      {
+        "id": "rl-4",
+        "text": "Return Amazon package",
+        "done": true
+      },
+      {
+        "id": "id-mmdu1j04-jiqiw",
+        "text": "eyebrows too",
+        "done": false
+      },
+      {
+        "id": "id-mmdu1mbg-40hpf",
+        "text": "get nails done",
+        "done": false
+      },
+      {
+        "id": "id-mmdu26f8-pjjch",
+        "text": "stop at bank",
+        "done": false
+      },
+      {
+        "id": "id-mmdu28af-ehfmk",
+        "text": "go to car wash",
+        "done": false
+      },
+      {
+        "id": "id-mmfsd8ca-bl4tj",
+        "text": "order a matress bag for king size or no buy group",
+        "done": false
+      }
+    ],
+    "calls": [
+      {
+        "id": "id-mmdtr1mj-8jcng",
+        "text": "download Claude on iphone or is that a bad idea",
+        "done": false
+      },
+      {
+        "id": "id-mmdtr1mj-kvdfq",
+        "text": "look into updating phone",
+        "done": false
+      },
+      {
+        "id": "id-mmdu1fht-c5m7e",
+        "text": "tell Ann I can't be her evaluator in June",
+        "done": true
+      },
+      {
+        "id": "id-mmdu1q5w-9w90o",
+        "text": "write mikec@aviate.org",
+        "done": false
+      },
+      {
+        "id": "id-mmdu1u8g-kujjm",
+        "text": "or ATM@aviate.org",
+        "done": false
+      },
+      {
+        "id": "id-mmdu2xy8-9svb2",
+        "text": "jill's birthday friday?",
+        "done": true
+      }
+    ],
+    "computer": [
+      {
+        "id": "rl-7",
+        "text": "Cancel unused subscriptions: ARCADE",
+        "done": false
+      },
+      {
+        "id": "rl-8",
+        "text": "Update passwords on key accounts",
+        "done": true
+      },
+      {
+        "id": "id-mmdtr1mi-a0j2n",
+        "text": "google drive copy file set for Friends Little Tokyo and get to Juliet",
+        "done": false
+      },
+      {
+        "id": "id-mmdtr1mi-u0jba",
+        "text": "Order ultraswim from amazon",
+        "done": false
+      },
+      {
+        "id": "id-mmdtr1mj-xdo3b",
+        "text": "AI slim recorder to transcribe",
+        "done": false
+      },
+      {
+        "id": "id-mmdtr1mj-5hf9k",
+        "text": "research cost for Logitech sensor base that rotates to whoever is talking",
+        "done": false
+      },
+      {
+        "id": "id-mmfrkwli-1wpbr",
+        "text": "order logitec rotating camera for recording band rehearsals",
+        "done": false
+      }
+    ],
+    "delegate": [
+      {
+        "id": "id-mmdtr1mi-8u6qy2",
+        "text": "use fancyhands to order sara's nail gift certificate",
+        "done": false
+      }
+    ]
+  },
+  "waitingOn": [
+    {
+      "id": "rl-9",
+      "text": "Waiting on contractor quote for bathroom",
+      "done": false
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-3",
+      "title": "Mexico City Vacation",
+      "nextAction": "Book flights for July",
+      "tasks": [
+        {
+          "id": "pt-11",
+          "text": "Decide on destination",
+          "done": true
+        },
+        {
+          "id": "pt-12",
+          "text": "Book flights for July",
+          "done": false
+        },
+        {
+          "id": "pt-13",
+          "text": "Reserve hotel/Airbnb",
+          "done": false
+        },
+        {
+          "id": "pt-14",
+          "text": "Plan daily activities",
+          "done": false
+        },
+        {
+          "id": "pt-15",
+          "text": "Arrange pet sitter",
+          "done": false
+        }
+      ],
+      "notes": "Thinking Costa Rica or Portugal. 10 days.",
+      "created": "2026-03-01",
+      "active": false,
+      "nextActionContext": "computer",
+      "category": "personal"
+    },
+    {
+      "id": "proj-4",
+      "title": "FASCINOMA",
+      "nextAction": "",
+      "tasks": [
+        {
+          "id": "id-mmfrk9z4-dm57i",
+          "text": "add to fascinoma project notes that Jeannine can play harmonica",
+          "done": true
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-06",
+      "active": true,
+      "category": "professional",
+      "nextActionContext": "calls"
+    },
+    {
+      "id": "proj-5",
+      "title": "RICH PANDEMIC",
+      "nextAction": "",
+      "tasks": [
+        {
+          "id": "id-mmfrphe7-4gwdr",
+          "text": "schedule writing sessions for next week",
+          "done": true
+        },
+        {
+          "id": "id-mmfrp8lm-2c3sn",
+          "text": "maybe publish that book bait",
+          "done": true
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-06",
+      "active": true,
+      "category": "professional",
+      "nextActionContext": "computer"
+    },
+    {
+      "id": "proj-6",
+      "title": "In Wide Mind",
+      "nextAction": "Learn about higsfield",
+      "tasks": [
+        {
+          "id": "id-mmfp1zz3-vyh06",
+          "text": "ask sam to research possible video creators on fiverrr",
+          "done": false
+        },
+        {
+          "id": "id-mmfp21c6-vdmj2",
+          "text": "pray about it",
+          "done": false
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-06",
+      "active": true,
+      "category": "professional",
+      "nextActionContext": "computer"
+    },
+    {
+      "id": "proj-7",
+      "title": "WATER & POWER",
+      "nextAction": "Ask Sam to have a world-class manager agent assess the database",
+      "tasks": [
+        {
+          "id": "id-mmfp5lfc-0pgsy",
+          "text": "also ask sam to have a world class database person design a database -- in what?  maybe it's another app?",
+          "done": false
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-06",
+      "active": true,
+      "category": "professional",
+      "nextActionContext": "computer"
+    },
+    {
+      "id": "proj-8",
+      "title": "NOIF COACHING",
+      "nextAction": "",
+      "tasks": [
+        {
+          "id": "id-mmfrk9z4-5ijii",
+          "text": "add to friend agenda - jill - i need more coaching on fear of medical establishment, pool - the pass. . .",
+          "done": false
+        },
+        {
+          "id": "id-mmfsd8c6-ceb05",
+          "text": "talk to jill about needing coaching for medical establishment aversion",
+          "done": false
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-06",
+      "active": true,
+      "category": "professional",
+      "nextActionContext": "computer"
+    },
+    {
+      "id": "proj-9",
+      "title": "DEMOCRACY HAIKU",
+      "nextAction": "",
+      "tasks": [],
+      "notes": "",
+      "created": "2026-03-06",
+      "active": true,
+      "category": "professional",
+      "nextActionContext": "computer"
+    },
+    {
+      "id": "id-mmfp3l54-9i9qg",
+      "title": "Mayfield High School Off-Season Reunion",
+      "nextAction": "email to Heather Massey for her and Erin",
+      "tasks": [
+        {
+          "id": "id-mmfp3l54-3ueg2",
+          "text": "email to Heather Massey for her and Erin",
+          "done": false
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-07",
+      "active": true
+    },
+    {
+      "id": "id-mmfrk9z4-ltkoh",
+      "title": "Podcast set-up",
+      "nextAction": "working mic and camera in both back room and in the big office",
+      "tasks": [
+        {
+          "id": "id-mmfrk9z4-ujqpt",
+          "text": "working mic and camera in both back room and in the big office",
+          "done": false
+        },
+        {
+          "id": "id-mmfrk9z4-wgnpk",
+          "text": "get macbook air working -- call apple care",
+          "done": false
+        }
+      ],
+      "notes": "",
+      "created": "2026-03-07",
+      "active": false
+    }
+  ],
+  "values": [],
+  "routines": {
+    "daily": {
+      "morning": [],
+      "afternoon": [],
+      "night": []
+    },
+    "weekly": [],
+    "monthly": []
+  },
+  "calendar": [],
+  "planning": {
+    "learn": [],
+    "do": [],
+    "become": []
+  },
+  "reminders": {
+    "recurring": [],
+    "deadlines": []
+  },
+  "somedayMaybe": [],
+  "recommendations": {
+    "books": [],
+    "music": [],
+    "podcasts": [],
+    "shows": [],
+    "other": []
+  },
+  "newPeople": [],
+  "friendAgendas": [],
+  "completed": [],
+  "weekPlan": {},
+  "weekPlanSettings": {
+    "deepWorkDays": [
+      2,
+      3,
+      4
+    ]
+  }
+}

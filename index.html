@@ -508,6 +508,7 @@ body {
   color: var(--text);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
+.project-icon { margin-right: 4px; flex-shrink: 0; }
 .project-title { cursor: text; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; }
 .project-title:hover { background: rgba(0,0,0,0.04); }
 .task-move {
@@ -620,8 +621,8 @@ body {
 /* ===== PROJECTS ===== */
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
 }
 .project-card {
   background: var(--surface);
@@ -630,7 +631,7 @@ body {
   overflow: hidden;
 }
 .project-header {
-  padding: 14px 16px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -646,11 +647,11 @@ body {
 .project-card.expanded .project-expand { transform: rotate(90deg); }
 .project-title {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
 .project-next-preview {
-  padding: 8px 16px;
-  font-size: 0.85rem;
+  padding: 6px 12px;
+  font-size: 0.8rem;
   color: var(--green);
   cursor: pointer;
   display: flex;
@@ -706,8 +707,56 @@ body {
   outline: none;
 }
 .next-action-input:focus { border-color: var(--green); }
-.add-project-btn {
-  margin-top: 12px;
+.project-add-card {
+  border: 2px dashed var(--border);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  cursor: pointer;
+  border-radius: var(--radius);
+  font-size: 2rem;
+  color: var(--text-dim);
+  transition: background 0.2s, border-color 0.2s;
+}
+.project-add-card:hover { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+.projects-divider {
+  border-top: 1px solid var(--border);
+  margin: 20px 0 12px;
+  padding-top: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.projects-zone-holding .project-card { opacity: 0.55; }
+.projects-zone-holding .project-card:hover { opacity: 0.8; }
+.projects-zone.drag-hover { background: var(--accent-glow); border-radius: var(--radius); padding: 8px; }
+.project-card.dragging { opacity: 0.3; }
+.project-status-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.project-status-btn:hover { background: rgba(0,0,0,0.06); }
+.project-notes-preview {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  padding: 0 16px 8px;
+  cursor: pointer;
+  max-height: 3.6em;
+  overflow: hidden;
+  line-height: 1.2em;
+}
+.notes-expand-hint { color: var(--accent); font-size: 0.75rem; }
+[data-drop-target="next-action"].drag-target-active {
+  background: var(--green-dim);
+  outline: 2px dashed var(--green);
+  border-radius: 6px;
 }
 
 /* ===== MODALS ===== */
@@ -1229,11 +1278,14 @@ body {
 .btn-ghost:hover { background: var(--surface2); }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .projects-grid { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 640px) {
   .brain-dump, .tabs, .tab-content, .inbox-bar, .completed-section { margin-left: 12px; margin-right: 12px; }
   .app-header { padding: 16px 12px 0; }
   .running-lists-grid { grid-template-columns: 1fr; }
-  .projects-grid { grid-template-columns: 1fr; }
+  .projects-grid { grid-template-columns: repeat(2, 1fr); }
   .stats-row { grid-template-columns: repeat(2, 1fr); }
   .week-strip { grid-template-columns: 1fr !important; }
   .day-column.day-deep .day-slot { min-height: 80px; }
@@ -1326,7 +1378,6 @@ body {
 <!-- Projects Tab -->
 <div class="tab-content" id="tab-projects">
   <div id="projectsList"></div>
-  <button class="btn btn-primary add-project-btn" onclick="showNewProjectModal()">+ New Project</button>
 </div>
 
 <!-- Completed Section -->
@@ -2114,32 +2165,61 @@ function deleteTask(type, parentId, taskId) {
 }
 
 // ===== PROJECTS =====
-function renderProjectCard(p, idx) {
+function renderProjectCard(p, idx, isHolding) {
     const done = p.tasks.filter(t => t.done).length;
     const total = p.tasks.length;
     const pct = total ? Math.round((done / total) * 100) : 0;
     const sorted = [...p.tasks.filter(t => !t.done), ...p.tasks.filter(t => t.done)];
     const openCount = total - done;
     const colors = PROJECT_COLORS[idx % PROJECT_COLORS.length];
+    const statusIcon = isHolding ? '▶' : '⏸';
+    const statusTitle = isHolding ? 'Activate' : 'Hold';
+
+    // Collapsible notes logic
+    const notesText = p.notes || '';
+    const notesLong = notesText.length > 100 || (notesText.match(/\n/g) || []).length > 2;
+    const notesPreview = notesText.split('\n').slice(0, 3).join('\n').substring(0, 100);
+
+    // Holding cards: minimal, header-only
+    if (isHolding) {
+      return `
+        <div class="project-card project-paused" id="project-${p.id}" draggable="true" data-project-id="${p.id}" style="border-color:${colors.border}">
+          <div class="project-header" style="background:${colors.color};border-color:${colors.border}" onclick="toggleProjectActive('${p.id}')">
+            <div class="list-card-title">
+              <span class="project-icon">📁</span><span class="project-title" style="pointer-events:none;">${esc(p.title)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div class="project-progress-mini">
+                <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+              </div>
+              <div class="list-card-count">${openCount}</div>
+              <button class="project-status-btn" onclick="event.stopPropagation(); toggleProjectActive('${p.id}')" title="${statusTitle}">${statusIcon}</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Active cards: full detail
     return `
-      <div class="project-card${p.active === false ? ' project-paused' : ' expanded'}" id="project-${p.id}" style="border-color:${colors.border}">
-        <div class="project-header" style="background:${colors.color};border-color:${colors.border}" onclick="${p.active === false ? `toggleProjectActive('${p.id}')` : `toggleProject('${p.id}')`}">
+      <div class="project-card" id="project-${p.id}" draggable="true" data-project-id="${p.id}" style="border-color:${colors.border}">
+        <div class="project-header" style="background:${colors.color};border-color:${colors.border}" onclick="toggleProject('${p.id}')">
           <div class="list-card-title">
             <span class="project-expand">▸</span>
-            <span class="project-title" onclick="event.stopPropagation(); startEditProjectTitle('${p.id}', this)">📁 ${esc(p.title)}</span>
+            <span class="project-icon">📁</span><span class="project-title" onclick="event.stopPropagation(); startEditProjectTitle('${p.id}', this)">${esc(p.title)}</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div style="display:flex;align-items:center;gap:6px;">
             <div class="project-progress-mini">
               <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
             </div>
             <div class="list-card-count">${openCount} open</div>
+            <button class="project-status-btn" onclick="event.stopPropagation(); toggleProjectActive('${p.id}')" title="${statusTitle}">${statusIcon}</button>
           </div>
         </div>
-        <div class="project-next-preview" onclick="toggleProject('${p.id}')">
+        <div class="project-next-preview" data-drop-target="next-action" data-project-id="${p.id}" onclick="toggleProject('${p.id}')">
           ▸ ${esc(p.nextAction || 'Set a next action...')}
         </div>
         <div class="project-body">
-          <div class="next-action-edit" style="padding:12px 16px 0;">
+          <div class="next-action-edit" data-drop-target="next-action" data-project-id="${p.id}" style="padding:12px 16px 0;">
             <span class="next-action-label">NEXT ACTION ➜</span>
             <input class="next-action-input" value="${esc(p.nextAction || '')}"
                    onchange="commitNextAction('${p.id}', this.value)"
@@ -2156,8 +2236,18 @@ function renderProjectCard(p, idx) {
             <button class="add-task-btn" onclick="addToProject('${p.id}')">+</button>
           </div>
           <div style="padding:0 16px 16px;">
-            <textarea class="project-notes" placeholder="Notes..."
-                      onchange="updateProjectNotes('${p.id}', this.value)">${esc(p.notes || '')}</textarea>
+            ${notesLong ? `
+              <div class="project-notes-preview" id="notes-preview-${p.id}" onclick="toggleProjectNotes('${p.id}')">
+                ${esc(notesPreview)}… <span class="notes-expand-hint">more</span>
+              </div>
+              <div id="notes-full-${p.id}" style="display:none;">
+                <textarea class="project-notes" placeholder="Notes..."
+                          onchange="updateProjectNotes('${p.id}', this.value)">${esc(notesText)}</textarea>
+              </div>
+            ` : `
+              <textarea class="project-notes" placeholder="Notes..."
+                        onchange="updateProjectNotes('${p.id}', this.value)">${esc(notesText)}</textarea>
+            `}
             <div style="display:flex;gap:8px;margin-top:8px;">
               <button class="btn btn-ghost" style="font-size:0.8rem;color:var(--red);"
                       onclick="deleteProject('${p.id}')">Delete Project</button>
@@ -2170,20 +2260,21 @@ function renderProjectCard(p, idx) {
 
 function renderProjects() {
   const active = data.projects.filter(p => p.active !== false);
-  const paused = data.projects.filter(p => p.active === false);
+  const holding = data.projects.filter(p => p.active === false);
 
-  let html = '<div class="projects-grid">' +
-    active.map((p, idx) => renderProjectCard(p, data.projects.indexOf(p))).join('') +
-    '</div>';
+  let html = `<div class="projects-zone" id="activeZone">
+    <div class="projects-grid">
+      ${active.map((p, idx) => renderProjectCard(p, data.projects.indexOf(p), false)).join('')}
+      <div class="project-add-card" onclick="showNewProjectModal()">+</div>
+    </div>
+  </div>`;
 
-  if (paused.length) {
-    html += `
-      <hr style="border:none;border-top:1px solid var(--border);margin:20px 0 8px;" />
-      <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:12px;">Paused (${paused.length})</div>
-      <div class="projects-grid">
-        ${paused.map((p, idx) => renderProjectCard(p, data.projects.indexOf(p))).join('')}
-      </div>`;
-  }
+  html += `<div class="projects-divider">Holding${holding.length ? ` (${holding.length})` : ''}</div>`;
+  html += `<div class="projects-zone projects-zone-holding" id="holdingZone">
+    <div class="projects-grid">
+      ${holding.map((p, idx) => renderProjectCard(p, data.projects.indexOf(p), true)).join('')}
+    </div>
+  </div>`;
 
   document.getElementById('projectsList').innerHTML = html;
 }
@@ -2195,9 +2286,27 @@ function toggleProject(projId) {
 function toggleProjectActive(projId) {
   const proj = data.projects.find(p => p.id === projId);
   if (proj) {
-    proj.active = proj.active === false ? true : false;
+    const wantsActive = proj.active === false;
+    if (wantsActive && data.projects.filter(p => p.active !== false).length >= 5) {
+      toast('Max 5 active projects. Move one to Holding first.');
+      return;
+    }
+    proj.active = wantsActive;
     save();
     render();
+  }
+}
+
+function toggleProjectNotes(projId) {
+  const preview = document.getElementById(`notes-preview-${projId}`);
+  const full = document.getElementById(`notes-full-${projId}`);
+  if (!preview || !full) return;
+  if (full.style.display === 'none') {
+    full.style.display = 'block';
+    preview.style.display = 'none';
+  } else {
+    full.style.display = 'none';
+    preview.style.display = 'block';
   }
 }
 
@@ -2976,25 +3085,68 @@ function highlightDropTarget(el) {
 }
 
 document.addEventListener('dragstart', function(e) {
+  // Task drag (check first — tasks are inside project cards)
   const item = e.target.closest('.task-item[draggable]');
-  if (!item) return;
-  dragState = {
-    taskId: item.dataset.taskId,
-    type: item.dataset.type,
-    parentId: item.dataset.parent
-  };
-  // Store task object reference
-  const sourceArr = getTaskArray(dragState.type, dragState.parentId);
-  if (sourceArr) {
-    dragState.taskObj = sourceArr.find(t => t.id === dragState.taskId);
+  if (item) {
+    dragState = {
+      dragKind: 'task',
+      taskId: item.dataset.taskId,
+      type: item.dataset.type,
+      parentId: item.dataset.parent
+    };
+    const sourceArr = getTaskArray(dragState.type, dragState.parentId);
+    if (sourceArr) {
+      dragState.taskObj = sourceArr.find(t => t.id === dragState.taskId);
+    }
+    item.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', item.dataset.taskId);
+    return;
   }
-  item.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/plain', item.dataset.taskId);
+
+  // Project card drag
+  const projectCard = e.target.closest('.project-card[draggable]');
+  if (projectCard) {
+    dragState = {
+      dragKind: 'project',
+      projectId: projectCard.dataset.projectId
+    };
+    projectCard.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', projectCard.dataset.projectId);
+    return;
+  }
 });
 
 document.addEventListener('dragover', function(e) {
   if (!dragState) return;
+
+  // Project card drag → zone targeting
+  if (dragState.dragKind === 'project') {
+    const zone = e.target.closest('.projects-zone');
+    const divider = e.target.closest('.projects-divider');
+    if (zone || divider) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.projects-zone').forEach(z => z.classList.remove('drag-hover'));
+      const targetZone = divider ? 'holding' : (zone && zone.id === 'holdingZone' ? 'holding' : 'active');
+      const targetEl = targetZone === 'holding' ? document.getElementById('holdingZone') : document.getElementById('activeZone');
+      if (targetEl) targetEl.classList.add('drag-hover');
+      dropTarget = { dropKind: 'zone', targetZone, element: targetEl };
+    }
+    return;
+  }
+
+  // Task drag → next-action drop target
+  const nextActionTarget = e.target.closest('[data-drop-target="next-action"]');
+  if (nextActionTarget && dragState.dragKind !== 'project') {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    clearAllDropIndicators();
+    nextActionTarget.classList.add('drag-target-active');
+    dropTarget = { dropKind: 'next-action', projectId: nextActionTarget.dataset.projectId, element: nextActionTarget };
+    return;
+  }
 
   // Case A: Hovering over a task-item
   const item = e.target.closest('.task-item[draggable]');
@@ -3081,9 +3233,46 @@ document.addEventListener('dragleave', function(e) {
 document.addEventListener('drop', function(e) {
   e.preventDefault();
   clearAllDropIndicators();
+  document.querySelectorAll('.projects-zone').forEach(z => z.classList.remove('drag-hover'));
   if (!dragState || !dropTarget) { dragState = null; dropTarget = null; return; }
 
   const dt = dropTarget;
+
+  // Project card dropped onto a zone
+  if (dragState.dragKind === 'project' && dt.dropKind === 'zone') {
+    const proj = data.projects.find(p => p.id === dragState.projectId);
+    if (proj) {
+      const wantsActive = dt.targetZone === 'active';
+      if (wantsActive && proj.active !== false) { dragState = null; dropTarget = null; return; } // already active
+      if (!wantsActive && proj.active === false) { dragState = null; dropTarget = null; return; } // already holding
+      if (wantsActive && data.projects.filter(p => p.active !== false).length >= 5) {
+        toast('Max 5 active projects. Move one to Holding first.');
+      } else {
+        proj.active = wantsActive;
+        save();
+        render();
+        toast(wantsActive ? `${proj.title} activated` : `${proj.title} moved to Holding`);
+      }
+    }
+    dragState = null; dropTarget = null; return;
+  }
+
+  // Task dropped onto a next-action field
+  if (dt.dropKind === 'next-action') {
+    const proj = data.projects.find(p => p.id === dt.projectId);
+    if (proj && dragState.taskObj) {
+      proj.nextAction = dragState.taskObj.text;
+      const sourceArr = getTaskArray(dragState.type, dragState.parentId);
+      if (sourceArr) {
+        const idx = sourceArr.findIndex(t => t.id === dragState.taskId);
+        if (idx !== -1) sourceArr.splice(idx, 1);
+      }
+      save();
+      render();
+      toast(`Set as next action for ${proj.title}`);
+    }
+    dragState = null; dropTarget = null; return;
+  }
 
   // Drop onto a day slot (weekly plan)
   if (dt.type === 'week') {
@@ -3230,9 +3419,10 @@ document.addEventListener('dragend', function(e) {
   dragState = null;
   dropTarget = null;
   clearAllDropIndicators();
-  document.querySelectorAll('.task-item').forEach(el => {
+  document.querySelectorAll('.task-item, .project-card').forEach(el => {
     el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
   });
+  document.querySelectorAll('.projects-zone').forEach(z => z.classList.remove('drag-hover'));
 });
 
 // ===== TWO-STAGE ACTIVATION =====
@@ -3337,7 +3527,7 @@ function startEditProjectTitle(projId, el) {
   input.select();
 
   function commit() {
-    const newText = input.value.trim().replace(/^📁\s*/, '');
+    const newText = input.value.trim();
     if (newText) {
       const proj = data.projects.find(p => p.id === projId);
       if (proj) proj.title = newText;

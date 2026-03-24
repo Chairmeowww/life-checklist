@@ -450,17 +450,14 @@ body {
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  cursor: default;
+  cursor: grab;
   position: relative;
 }
 .task-item:hover { background: var(--surface2); }
+.task-item:active { cursor: grabbing; }
 .task-item.selected {
   background: #ddd;
-  cursor: grab !important;
 }
-.task-item.selected .task-text,
-.task-item.selected .task-checkbox { cursor: grab !important; }
-.task-item.selected:active { cursor: grabbing !important; }
 .task-item.selected .task-move,
 .task-item.selected .task-delete { cursor: pointer !important; }
 .task-item:not(.selected):not(:hover) .task-move,

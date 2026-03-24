@@ -732,6 +732,8 @@ body {
 .projects-zone-holding .project-card { opacity: 0.55; }
 .projects-zone-holding .project-card:hover { opacity: 0.8; }
 .projects-zone.drag-hover { background: var(--accent-glow); border-radius: var(--radius); padding: 8px; }
+.project-card[draggable] { cursor: grab; }
+.project-card[draggable]:active { cursor: grabbing; }
 .project-card.dragging { opacity: 0.3; }
 .project-status-btn {
   background: none;

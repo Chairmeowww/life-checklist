@@ -454,11 +454,13 @@ body {
   position: relative;
 }
 .task-item:hover { background: var(--surface2); }
-.task-item.selected {
+.task-item.selected,
+.task-item.selected * {
   background: #ddd;
-  cursor: grab;
+  cursor: grab !important;
 }
-.task-item.selected:active { cursor: grabbing; }
+.task-item.selected:active,
+.task-item.selected:active * { cursor: grabbing !important; }
 .task-item:not(.selected) .task-move,
 .task-item:not(.selected) .task-delete { opacity: 0 !important; pointer-events: none; }
 .task-item.done { opacity: 0.4; }

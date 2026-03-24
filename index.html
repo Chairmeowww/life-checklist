@@ -2119,11 +2119,15 @@ function addToList(listKey) {
   const input = document.getElementById(`add-list-${listKey}`);
   const text = input.value.trim();
   if (!text) return;
-  data.runningLists[listKey].push({ id: uid(), text, done: false });
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+  lines.forEach(line => {
+    data.runningLists[listKey].push({ id: uid(), text: line, done: false });
+  });
   input.value = '';
   save();
   render();
   document.getElementById(`add-list-${listKey}`).focus();
+  if (lines.length > 1) toast(`Added ${lines.length} items`);
 }
 
 function toggleTask(type, parentId, taskId) {
@@ -2316,12 +2320,17 @@ function addToProject(projId) {
   if (!text) return;
   const proj = data.projects.find(p => p.id === projId);
   if (proj) {
-    proj.tasks.push({ id: uid(), text, done: false });
+    // Split multi-line input into individual tasks
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+    lines.forEach(line => {
+      proj.tasks.push({ id: uid(), text: line, done: false });
+    });
     input.value = '';
     save();
     render();
     document.getElementById(`project-${projId}`).classList.add('expanded');
     document.getElementById(`add-proj-${projId}`).focus();
+    if (lines.length > 1) toast(`Added ${lines.length} tasks`);
   }
 }
 

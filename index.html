@@ -3458,6 +3458,9 @@ function handleTaskClick(el, type, parentId, taskId, event) {
   el.classList.add('selected');
   el.setAttribute('draggable', 'true');
   selectedTaskEl = el;
+  // Force cursor update in browser
+  el.style.cursor = 'grab';
+  requestAnimationFrame(() => { el.style.cursor = ''; });
 }
 
 function deselectTask() {

@@ -2201,7 +2201,7 @@ function renderProjectCard(p, idx, isHolding) {
 
     // Active cards: full detail
     return `
-      <div class="project-card" id="project-${p.id}" draggable="true" data-project-id="${p.id}" style="border-color:${colors.border}">
+      <div class="project-card expanded" id="project-${p.id}" draggable="true" data-project-id="${p.id}" style="border-color:${colors.border}">
         <div class="project-header" style="background:${colors.color};border-color:${colors.border}" onclick="toggleProject('${p.id}')">
           <div class="list-card-title">
             <span class="project-expand">▸</span>

@@ -454,15 +454,17 @@ body {
   position: relative;
 }
 .task-item:hover { background: var(--surface2); }
-.task-item.selected,
-.task-item.selected * {
+.task-item.selected {
   background: #ddd;
   cursor: grab !important;
 }
-.task-item.selected:active,
-.task-item.selected:active * { cursor: grabbing !important; }
-.task-item:not(.selected) .task-move,
-.task-item:not(.selected) .task-delete { opacity: 0 !important; pointer-events: none; }
+.task-item.selected .task-text,
+.task-item.selected .task-checkbox { cursor: grab !important; }
+.task-item.selected:active { cursor: grabbing !important; }
+.task-item.selected .task-move,
+.task-item.selected .task-delete { cursor: pointer !important; }
+.task-item:not(.selected):not(:hover) .task-move,
+.task-item:not(.selected):not(:hover) .task-delete { opacity: 0; pointer-events: none; }
 .task-item.done { opacity: 0.4; }
 .task-item.done .task-text { text-decoration: line-through; }
 .task-item.dragging {
@@ -524,7 +526,8 @@ body {
   border-radius: 4px;
   transition: all 0.15s;
 }
-.task-item:hover .task-move { opacity: 0.6; }
+.task-item:hover .task-move,
+.task-item.selected .task-move { opacity: 0.6; }
 .task-move:hover { opacity: 1 !important; background: var(--accent-dim); }
 .task-delete {
   opacity: 0;
@@ -537,7 +540,8 @@ body {
   border-radius: 4px;
   transition: all 0.15s;
 }
-.task-item:hover .task-delete { opacity: 0.6; }
+.task-item:hover .task-delete,
+.task-item.selected .task-delete { opacity: 0.6; }
 .task-delete:hover { opacity: 1 !important; background: var(--red-dim); }
 
 /* Move-to picker dropdown */
